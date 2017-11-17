@@ -88,6 +88,14 @@ class AllureAdapter implements TestListener
         return new Annotation\AnnotationManager($annotations);
     }
 
+    protected function updateEventInfo($event, Exception $e, $message = null)
+    {
+        $event->withException($e);
+        if ($message !== null) {
+            $event->withMessage($message);
+        }
+    }
+
     /**
      * An error occurred.
      *
@@ -98,7 +106,8 @@ class AllureAdapter implements TestListener
     public function addError(Test $test, Exception $e, $time)
     {
         $event = new TestCaseBrokenEvent();
-        Allure::lifecycle()->fire($event->withException($e)->withMessage($e->getMessage()));
+        $this->updateEventInfo($event, $e, $e->getMessage());
+        Allure::lifecycle()->fire($event);
     }
 
     /**
@@ -133,8 +142,8 @@ class AllureAdapter implements TestListener
         ) {
             $message .= $e->getComparisonFailure()->getDiff();
         }
-
-        Allure::lifecycle()->fire($event->withException($e)->withMessage($message));
+        $this->updateEventInfo($event, $e, $message);
+        Allure::lifecycle()->fire($event);
     }
 
     /**
@@ -147,7 +156,8 @@ class AllureAdapter implements TestListener
     public function addIncompleteTest(Test $test, Exception $e, $time)
     {
         $event = new TestCasePendingEvent();
-        Allure::lifecycle()->fire($event->withException($e));
+        $this->updateEventInfo($event, $e);
+        Allure::lifecycle()->fire($event);
     }
 
     /**
@@ -183,7 +193,8 @@ class AllureAdapter implements TestListener
         }
 
         $event = new TestCaseCanceledEvent();
-        Allure::lifecycle()->fire($event->withException($e)->withMessage($e->getMessage()));
+        $this->updateEventInfo($event, $e, $e->getMessage());
+        Allure::lifecycle()->fire($event);
 
         if ($shouldCreateStartStopEvents && $test instanceof TestCase){
             $this->endTest($test, 0);
