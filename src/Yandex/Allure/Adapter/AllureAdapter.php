@@ -58,7 +58,7 @@ class AllureAdapter implements TestListener
         }
 
         $this->prepareOutputDirectory($outputDirectory, $deletePreviousResults);
-        
+
         // Add standard PHPUnit annotations
         Annotation\AnnotationProvider::addIgnoredAnnotations($this->ignoredAnnotations);
         // Add custom ignored annotations
@@ -82,7 +82,12 @@ class AllureAdapter implements TestListener
             Model\Provider::setOutputDirectory($outputDirectory);
         }
     }
-    
+
+    protected function getAnnotationManager(array $annotations)
+    {
+        return new Annotation\AnnotationManager($annotations);
+    }
+
     /**
      * An error occurred.
      *
@@ -203,10 +208,9 @@ class AllureAdapter implements TestListener
         $this->suiteName = $suiteName;
 
         if (class_exists($suiteName, false)) {
-            $annotationManager = new Annotation\AnnotationManager(
+            $this->getAnnotationManager(
                 Annotation\AnnotationProvider::getClassAnnotations($suiteName)
-            );
-            $annotationManager->updateTestSuiteEvent($event);
+            )->updateTestSuiteEvent($event);
         }
 
         Allure::lifecycle()->fire($event);
@@ -240,10 +244,9 @@ class AllureAdapter implements TestListener
 
             $event = new TestCaseStartedEvent($this->uuid, $testName);
             if (method_exists($test, $methodName)) {
-                $annotationManager = new Annotation\AnnotationManager(
+                $this->getAnnotationManager(
                     Annotation\AnnotationProvider::getMethodAnnotations(get_class($test), $methodName)
-                );
-                $annotationManager->updateTestCaseEvent($event);
+                )->updateTestCaseEvent($event);
             }
             Allure::lifecycle()->fire($event);
         }
